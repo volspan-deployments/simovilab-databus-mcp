@@ -32,7 +32,7 @@ async def list_routes(
     limit: int = 100,
     offset: int = 0,
 ) -> dict:
-    """Retrieve a list of all transit routes available in the system. Use this when the user wants to explore available bus/transit lines, filter routes by agency, or get an overview of the transit network."""
+    """Retrieve a list of transit routes from the GTFS Schedule data. Use this when the user wants to explore available bus/transit routes, filter routes by agency, or get an overview of the transit network."""
     params = {"limit": limit, "offset": offset}
     if agency_id is not None:
         params["agency_id"] = agency_id
@@ -52,7 +52,7 @@ async def list_routes(
 
 @mcp.tool()
 async def get_route(route_id: str) -> dict:
-    """Retrieve detailed information about a specific transit route by its ID, including route name, type, color, and associated agency. Use when the user asks about a specific route."""
+    """Retrieve detailed information about a specific transit route by its ID. Use this when the user needs full details on a single route including its stops, trips, and schedule information."""
     async with httpx.AsyncClient() as client:
         response = await client.get(
             f"{BASE_URL}/routes/{route_id}/",
@@ -65,26 +65,23 @@ async def get_route(route_id: str) -> dict:
 
 @mcp.tool()
 async def list_stops(
-    agency_id: Optional[str] = None,
     route_id: Optional[str] = None,
-    latitude: Optional[str] = None,
-    longitude: Optional[str] = None,
-    radius_meters: int = 500,
+    lat: Optional[str] = None,
+    lon: Optional[str] = None,
+    radius: int = 500,
     limit: int = 100,
     offset: int = 0,
 ) -> dict:
-    """Retrieve a list of transit stops, optionally filtered by location (geospatial radius), route, or agency. Use when the user wants to find stops near a location or explore all stops in the network."""
+    """Retrieve a list of transit stops with geospatial data. Use this when the user wants to find stops near a location, browse all stops, or get stop metadata including coordinates and accessibility info."""
     params = {"limit": limit, "offset": offset}
-    if agency_id is not None:
-        params["agency_id"] = agency_id
     if route_id is not None:
         params["route_id"] = route_id
-    if latitude is not None:
-        params["latitude"] = latitude
-    if longitude is not None:
-        params["longitude"] = longitude
-    if latitude is not None and longitude is not None:
-        params["radius_meters"] = radius_meters
+    if lat is not None:
+        params["lat"] = lat
+    if lon is not None:
+        params["lon"] = lon
+    if lat is not None or lon is not None:
+        params["radius"] = radius
 
     async with httpx.AsyncClient() as client:
         response = await client.get(
@@ -99,7 +96,7 @@ async def list_stops(
 
 @mcp.tool()
 async def get_stop(stop_id: str) -> dict:
-    """Retrieve detailed information about a specific transit stop by its ID, including name, location coordinates, and associated routes. Use when the user asks about a specific stop."""
+    """Retrieve detailed information about a specific transit stop by its ID. Use this to get full stop details including coordinates, name, accessibility features, and associated routes."""
     async with httpx.AsyncClient() as client:
         response = await client.get(
             f"{BASE_URL}/stops/{stop_id}/",
@@ -114,18 +111,18 @@ async def get_stop(stop_id: str) -> dict:
 async def list_trips(
     route_id: Optional[str] = None,
     service_id: Optional[str] = None,
-    agency_id: Optional[str] = None,
+    direction_id: Optional[int] = None,
     limit: int = 100,
     offset: int = 0,
 ) -> dict:
-    """Retrieve trips (scheduled service runs) for a route or service day. Use this when the user wants to know the schedule, trip times, or service patterns for a particular route or agency."""
+    """Retrieve a list of GTFS trips for a given route or service date. Use this when the user wants to see scheduled trip runs, headways, or trip metadata for planning or analysis purposes."""
     params = {"limit": limit, "offset": offset}
     if route_id is not None:
         params["route_id"] = route_id
     if service_id is not None:
         params["service_id"] = service_id
-    if agency_id is not None:
-        params["agency_id"] = agency_id
+    if direction_id is not None:
+        params["direction_id"] = direction_id
 
     async with httpx.AsyncClient() as client:
         response = await client.get(
@@ -141,20 +138,17 @@ async def list_trips(
 @mcp.tool()
 async def get_realtime_vehicle_positions(
     route_id: Optional[str] = None,
-    agency_id: Optional[str] = None,
     trip_id: Optional[str] = None,
-    vehicle_id: Optional[str] = None,
+    agency_id: Optional[str] = None,
 ) -> dict:
-    """Retrieve live vehicle positions for the transit network using GTFS Realtime data. Use this when the user asks where vehicles are right now, wants to track a specific vehicle, or needs real-time location data."""
+    """Retrieve live vehicle position data from the GTFS Realtime feed. Use this when the user wants to know where vehicles currently are on the network, including GPS coordinates, speed, bearing, and which trip/route each vehicle is serving."""
     params = {}
     if route_id is not None:
         params["route_id"] = route_id
-    if agency_id is not None:
-        params["agency_id"] = agency_id
     if trip_id is not None:
         params["trip_id"] = trip_id
-    if vehicle_id is not None:
-        params["vehicle_id"] = vehicle_id
+    if agency_id is not None:
+        params["agency_id"] = agency_id
 
     async with httpx.AsyncClient() as client:
         response = await client.get(
@@ -169,19 +163,21 @@ async def get_realtime_vehicle_positions(
 
 @mcp.tool()
 async def get_service_alerts(
-    agency_id: Optional[str] = None,
     route_id: Optional[str] = None,
     stop_id: Optional[str] = None,
-    active_only: bool = True,
+    agency_id: Optional[str] = None,
+    severity: Optional[str] = None,
 ) -> dict:
-    """Retrieve active GTFS Realtime service alerts such as disruptions, delays, detours, or cancellations. Use this when the user asks about current service disruptions, incidents, or any active notices affecting transit service."""
-    params = {"active_only": active_only}
-    if agency_id is not None:
-        params["agency_id"] = agency_id
+    """Retrieve active GTFS Realtime service alerts including disruptions, delays, detours, and informational notices. Use this when the user asks about service disruptions, delays, or any alerts affecting transit operations."""
+    params = {}
     if route_id is not None:
         params["route_id"] = route_id
     if stop_id is not None:
         params["stop_id"] = stop_id
+    if agency_id is not None:
+        params["agency_id"] = agency_id
+    if severity is not None:
+        params["severity"] = severity
 
     async with httpx.AsyncClient() as client:
         response = await client.get(
@@ -195,26 +191,22 @@ async def get_service_alerts(
 
 
 @mcp.tool()
-async def get_trip_updates(
-    stop_id: Optional[str] = None,
+async def get_stop_times(
     trip_id: Optional[str] = None,
-    route_id: Optional[str] = None,
-    agency_id: Optional[str] = None,
+    stop_id: Optional[str] = None,
+    limit: int = 100,
+    offset: int = 0,
 ) -> dict:
-    """Retrieve GTFS Realtime trip updates including real-time arrival and departure predictions, delays, and schedule deviations for stops. Use this when the user wants to know the next arrivals at a stop or whether a specific trip is running on time."""
-    params = {}
-    if stop_id is not None:
-        params["stop_id"] = stop_id
+    """Retrieve scheduled arrival and departure times for stops along a specific trip or at a specific stop. Use this when the user wants to know when a bus arrives at a particular stop or the full timetable for a trip."""
+    params = {"limit": limit, "offset": offset}
     if trip_id is not None:
         params["trip_id"] = trip_id
-    if route_id is not None:
-        params["route_id"] = route_id
-    if agency_id is not None:
-        params["agency_id"] = agency_id
+    if stop_id is not None:
+        params["stop_id"] = stop_id
 
     async with httpx.AsyncClient() as client:
         response = await client.get(
-            f"{BASE_URL}/realtime/trip-updates/",
+            f"{BASE_URL}/stop-times/",
             headers=get_headers(),
             params=params,
             timeout=30.0,
