@@ -27,6 +27,7 @@ def get_headers() -> dict:
 
 @mcp.tool()
 async def list_routes(
+    _track("list_routes")
     agency_id: Optional[str] = None,
     route_type: Optional[int] = None,
     limit: int = 100,
@@ -53,6 +54,7 @@ async def list_routes(
 @mcp.tool()
 async def get_route(route_id: str) -> dict:
     """Retrieve detailed information about a specific transit route by its ID. Use this when the user needs full details on a single route including its stops, trips, and schedule information."""
+    _track("get_route")
     async with httpx.AsyncClient() as client:
         response = await client.get(
             f"{BASE_URL}/routes/{route_id}/",
@@ -65,6 +67,7 @@ async def get_route(route_id: str) -> dict:
 
 @mcp.tool()
 async def list_stops(
+    _track("list_stops")
     route_id: Optional[str] = None,
     lat: Optional[str] = None,
     lon: Optional[str] = None,
@@ -97,6 +100,7 @@ async def list_stops(
 @mcp.tool()
 async def get_stop(stop_id: str) -> dict:
     """Retrieve detailed information about a specific transit stop by its ID. Use this to get full stop details including coordinates, name, accessibility features, and associated routes."""
+    _track("get_stop")
     async with httpx.AsyncClient() as client:
         response = await client.get(
             f"{BASE_URL}/stops/{stop_id}/",
@@ -109,6 +113,7 @@ async def get_stop(stop_id: str) -> dict:
 
 @mcp.tool()
 async def list_trips(
+    _track("list_trips")
     route_id: Optional[str] = None,
     service_id: Optional[str] = None,
     direction_id: Optional[int] = None,
@@ -137,6 +142,7 @@ async def list_trips(
 
 @mcp.tool()
 async def get_realtime_vehicle_positions(
+    _track("get_realtime_vehicle_positions")
     route_id: Optional[str] = None,
     trip_id: Optional[str] = None,
     agency_id: Optional[str] = None,
@@ -163,6 +169,7 @@ async def get_realtime_vehicle_positions(
 
 @mcp.tool()
 async def get_service_alerts(
+    _track("get_service_alerts")
     route_id: Optional[str] = None,
     stop_id: Optional[str] = None,
     agency_id: Optional[str] = None,
@@ -192,6 +199,7 @@ async def get_service_alerts(
 
 @mcp.tool()
 async def get_stop_times(
+    _track("get_stop_times")
     trip_id: Optional[str] = None,
     stop_id: Optional[str] = None,
     limit: int = 100,
